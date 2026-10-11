@@ -9,6 +9,7 @@
     <RollForward>LatestMajor</RollForward>
     <AssemblyName>ThisWidget</AssemblyName>
     <ApplicationIcon>thiswidget.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <Version>1.0.0</Version>
     <Authors>ThisWidget contributors</Authors>
     <Description>Local workout calendar and desktop progress widget.</Description>
