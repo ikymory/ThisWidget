@@ -121,7 +121,7 @@ public static class Native
             return;
         using var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("Software\\Microsoft\\Windows\\CurrentVersion\\Run");
         if (enabled)
-            key.SetValue("ThisWidget", "\"" + Environment.ProcessPath + "\" --background");
+            key.SetValue("ThisWidget", "\"" + AppPaths.PhysicalPath(Environment.ProcessPath!) + "\" --background");
         else
             key.DeleteValue("ThisWidget", false);
     }

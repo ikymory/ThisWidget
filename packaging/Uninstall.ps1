@@ -2,14 +2,16 @@
 param()
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
-$root = [IO.Path]::GetFullPath((Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'ThisWidget'))
+. (Join-Path $PSScriptRoot 'Paths.ps1')
+$root = [IO.Path]::GetFullPath((Get-ThisWidgetInstallRoot))
+if (Test-Path -LiteralPath $root -PathType Container) { $root = [ThisWidgetInstallPaths]::Physical($root) }
 $target = [IO.Path]::GetFullPath((Join-Path $root 'app'))
 $exe = Join-Path $target 'ThisWidget.exe'
 if ((Split-Path $target -Parent) -ne $root -or (Split-Path $target -Leaf) -ne 'app') {
     throw 'Unexpected installation path; no files were removed.'
 }
 $running = @(Get-Process -ErrorAction SilentlyContinue | Where-Object {
-    try { $_.Path -and [string]::Equals($_.Path, $exe, [StringComparison]::OrdinalIgnoreCase) } catch { $false }
+    try { $_.Path -and [string]::Equals([ThisWidgetInstallPaths]::Physical($_.Path), $exe, [StringComparison]::OrdinalIgnoreCase) } catch { $false }
 })
 if ($running.Count -gt 0) {
     & $exe --exit

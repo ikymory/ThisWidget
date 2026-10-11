@@ -1,4 +1,17 @@
-ThisWidget 1.0.0 introduces an offline Windows workout calendar and a compact desktop widget.
+ThisWidget 1.0.1 fixes desktop widget startup after an installation through a packaged launcher.
+
+- Windows sign-in and shortcuts now point to the physical executable instead of an AppData path visible only inside the installer container.
+- Installed apps reuse the same journal from Explorer, retaining progress, plans, colors and size settings.
+- Updates and uninstall resolve the same physical installation folder.
+- Added native desktop visibility checks and installed/portable profile regression tests.
+
+Download and extract the matching zip, then run Install.cmd to update. Your journal is preserved. The widget stays pinned behind other apps; show your desktop to see it.
+
+The runtime is included. Windows x64 was tested locally; ARM64 is cross-built and hardware execution remains unverified. Releases are unsigned.
+
+## 1.0.0
+
+ThisWidget 1.0.0 introduced an offline Windows workout calendar and a compact desktop widget.
 
 - Full-year completion boxes, today's weekday/focus, weekly goals and streaks.
 - Recurring weekday workouts, individual checkmarks, date overrides and notes.

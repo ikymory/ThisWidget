@@ -17,6 +17,8 @@ public static class UiTests
 {
     [DllImport("user32.dll")]
     static extern bool IsWindowVisible(IntPtr hwnd);
+    [DllImport("user32.dll")]
+    static extern IntPtr GetParent(IntPtr hwnd);
     static int passed, failed;
     static void Test(string name, Action run)
     {
@@ -108,6 +110,20 @@ public static class UiTests
         });
         if (args.Contains("--desktop"))
         {
+            Test("Pinned widget is natively visible on a visible desktop host", () =>
+            {
+                j.Settings.DesktopMode = true;
+                controller.ApplySettings(j.Settings);
+                controller.Widget.UpdateLayout();
+                var hwnd = new WindowInteropHelper(controller.Widget).Handle;
+                Eq(true, IsWindowVisible(hwnd));
+                Eq(true, IsWindowVisible(GetParent(hwnd)));
+                Eq(true, controller.Widget.IsDesktopAttached);
+                var area = SystemParameters.WorkArea;
+                Eq(true, controller.Widget.Left >= area.Left && controller.Widget.Top >= area.Top);
+                Eq(true, controller.Widget.Left + controller.Widget.Width <= area.Right + 1);
+                Eq(true, controller.Widget.Top + controller.Widget.Height <= area.Bottom + 1);
+            });
             Test("Native widget attaches to desktop while editor stays independent", () => { j.Settings.DesktopMode = true; controller.ApplySettings(j.Settings); Eq(true, Native.HasParent(new WindowInteropHelper(controller.Widget).Handle)); Eq(false, Native.HasParent(new WindowInteropHelper(w).Handle)); j.Settings.DesktopMode = false; controller.ApplySettings(j.Settings); Eq(false, Native.HasParent(new WindowInteropHelper(controller.Widget).Handle)); });
             Test("Changing settings cannot revive a removed desktop widget", () =>
             {

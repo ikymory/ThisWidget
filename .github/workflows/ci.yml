@@ -17,6 +17,7 @@ jobs:
       - run: dotnet build src/ThisWidget -c Release
       - run: dotnet run --project tests/ThisWidget.Tests
       - run: dotnet run --project tests/ThisWidget.UiTests
+      - run: ./tests/Packaging.Tests.ps1
       - run: ./scripts/Publish.ps1 -Runtime win-x64
       - uses: actions/upload-artifact@v4
         with:

@@ -44,7 +44,7 @@ Desktop attachment uses Explorer's desktop host. If Explorer is not ready at sig
 
 ## Your data
 
-No accounts, ads, subscriptions, analytics or application network requests. Progress is saved at `%LOCALAPPDATA%\ThisWidget\journal.json`. A previous-save `.bak` and safety copies protect recovery and imports. Export backups for long-term snapshots.
+No accounts, ads, subscriptions, analytics or application network requests. Progress normally lives at `%LOCALAPPDATA%\ThisWidget\journal.json`. An installed app uses the journal beside its `app` folder, preserving the same profile when a packaged launcher redirects AppData. Shortcuts and Windows startup use the physical executable path. A previous-save `.bak` and safety copies protect recovery and imports. Export backups for long-term snapshots.
 
 Earlier Yearform journals are copied on the first launch if a ThisWidget journal does not already exist. The original is preserved. The installer retires the old shortcut/startup entry only when they point to the former app installation.
 
@@ -65,6 +65,8 @@ For local Explorer attachment checks and generated previews:
 ```powershell
 dotnet run --project tests/ThisWidget.UiTests -- docs/images --desktop
 ```
+
+After installing, verify the running desktop widget and its Windows startup target with `./tests/Installation.Tests.ps1`.
 
 Create a self-contained Windows release:
 

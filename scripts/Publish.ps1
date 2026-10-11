@@ -19,7 +19,7 @@ New-Item -ItemType Directory -Path $folder -Force | Out-Null
 & $Dotnet publish (Join-Path $repo 'src/ThisWidget') -c Release -r $Runtime --self-contained true `
     -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -o $folder
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed ($LASTEXITCODE)." }
-foreach ($file in @('Install.cmd', 'Install.ps1', 'Uninstall.cmd', 'Uninstall.ps1')) {
+foreach ($file in @('Paths.ps1', 'Install.cmd', 'Install.ps1', 'Uninstall.cmd', 'Uninstall.ps1')) {
     Copy-Item -LiteralPath (Join-Path $repo "packaging/$file") -Destination $folder
 }
 foreach ($file in @('README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'CONTRIBUTING.md', 'RELEASE_NOTES.md')) {

@@ -17,6 +17,7 @@ jobs:
           dotnet-version: 10.0.x
       - run: dotnet run --project tests/ThisWidget.Tests
       - run: dotnet run --project tests/ThisWidget.UiTests
+      - run: ./tests/Packaging.Tests.ps1
       - run: ./scripts/Publish.ps1 -Runtime ${{ matrix.runtime }}
       - uses: actions/upload-artifact@v4
         with:

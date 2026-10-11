@@ -3,15 +3,17 @@
 param([switch]$NoLaunch)
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
-$source = [IO.Path]::GetFullPath($PSScriptRoot)
-$root = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'ThisWidget'
+. (Join-Path $PSScriptRoot 'Paths.ps1')
+$source = [ThisWidgetInstallPaths]::Physical($PSScriptRoot)
+$root = Get-ThisWidgetInstallRoot
 $target = [IO.Path]::GetFullPath((Join-Path $root 'app'))
 $exe = Join-Path $target 'ThisWidget.exe'
 $legacyExe = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'Yearform\app\Yearform.exe'
 
 function Get-AppProcess([string]$Path) {
+    $physical = if (Test-Path -LiteralPath $Path) { [ThisWidgetInstallPaths]::Physical($Path) } else { $Path }
     @(Get-Process -ErrorAction SilentlyContinue | Where-Object {
-        try { $_.Path -and [string]::Equals($_.Path, $Path, [StringComparison]::OrdinalIgnoreCase) } catch { $false }
+        try { $_.Path -and [string]::Equals([ThisWidgetInstallPaths]::Physical($_.Path), $physical, [StringComparison]::OrdinalIgnoreCase) } catch { $false }
     })
 }
 
@@ -60,7 +62,7 @@ if (-not [string]::Equals($source.TrimEnd('\'), $target.TrimEnd('\'), [StringCom
     Stop-LegacyApp
     New-Item -ItemType Directory -Path $target -Force | Out-Null
     # Copy only application deliverables, never a journal or arbitrary extracted files.
-    foreach ($name in @('ThisWidget.exe', 'Install.cmd', 'Install.ps1', 'Uninstall.cmd', 'Uninstall.ps1', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'CONTRIBUTING.md', 'RELEASE_NOTES.md')) {
+    foreach ($name in @('ThisWidget.exe', 'Paths.ps1', 'Install.cmd', 'Install.ps1', 'Uninstall.cmd', 'Uninstall.ps1', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'CONTRIBUTING.md', 'RELEASE_NOTES.md')) {
         $file = Join-Path $source $name
         if (Test-Path -LiteralPath $file -PathType Leaf) { Copy-Item -LiteralPath $file -Destination (Join-Path $target $name) -Force }
     }
@@ -70,6 +72,9 @@ if (-not [string]::Equals($source.TrimEnd('\'), $target.TrimEnd('\'), [StringCom
     }
 }
 
+$root = [ThisWidgetInstallPaths]::Physical($root)
+$target = [ThisWidgetInstallPaths]::Physical($target)
+$exe = [ThisWidgetInstallPaths]::Physical($exe)
 $shell = New-Object -ComObject WScript.Shell
 foreach ($directory in @([Environment]::GetFolderPath('Desktop'), [Environment]::GetFolderPath('Programs'))) {
     $shortcut = $shell.CreateShortcut((Join-Path $directory 'ThisWidget.lnk'))

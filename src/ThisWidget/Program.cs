@@ -16,15 +16,28 @@ public static class Program
     [STAThread]
     public static int Main(string[] args)
     {
-        var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ThisWidget", "journal.json");
+        try { return Run(args); }
+        catch (Exception e)
+        {
+            Log(e);
+            MessageBox.Show(e.Message, "ThisWidget could not start", MessageBoxButton.OK, MessageBoxImage.Error);
+            return 1;
+        }
+    }
+
+    private static int Run(string[] args)
+    {
+        string? path = null;
         Integrate = true;
         bool background = Array.Exists(args, x => x == "--background") || !Array.Exists(args, x => x == "--editor");
         for (int i = 0; i < args.Length; i++)
             if (args[i] == "--data" && i + 1 < args.Length)
             {
-                path = Path.GetFullPath(args[++i]);
+                path = AppPaths.JournalPath(args[++i]);
                 Integrate = false;
             }
+        path ??= AppPaths.DefaultJournalPath(Environment.ProcessPath!,
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
         DataFolder = Path.GetDirectoryName(path)!;
         var name = "Local\\ThisWidget-" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
             System.Text.Encoding.UTF8.GetBytes(path.ToUpperInvariant())))[..24];
@@ -65,17 +78,13 @@ public static class Program
             app.Run();
             return 0;
         }
-        catch (Exception e)
-        {
-            Log(e);
-            MessageBox.Show(e.Message, "ThisWidget could not start", MessageBoxButton.OK, MessageBoxImage.Error);
-            return 1;
-        }
         finally { mutex.ReleaseMutex(); }
     }
 
     public static void Log(Exception error)
     {
+        if (DataFolder.Length == 0)
+            return;
         try
         {
             Directory.CreateDirectory(DataFolder);

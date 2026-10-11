@@ -57,6 +57,30 @@ Test("Long-term notes round-trip beyond the old five-million-character limit", (
     Eq(660, restored.Days.Count);
     Eq(note, restored.Days[Journal.Key(today.AddDays(-659))].Notes);
 });
+Test("Installed app uses the same journal when launched outside its installer container", () =>
+{
+    var root = Path.Combine(dir, "installed", "ThisWidget");
+    var app = Path.Combine(root, "app");
+    Directory.CreateDirectory(app);
+    var executable = Path.Combine(app, "ThisWidget.exe");
+    File.WriteAllText(executable, "path fixture");
+    var journalPath = AppPaths.JournalPath(Path.Combine(root, "journal.json"));
+    new Store(journalPath).Save(new Journal { Settings = new Appearance { Accent = "#FB7A92" } });
+    var resolved = AppPaths.DefaultJournalPath(executable, Path.Combine(dir, "different-local-data"));
+    Eq(journalPath, resolved);
+    Eq("#FB7A92", new Store(resolved).Load().Settings.Accent);
+});
+Test("Portable app still keeps its journal in local application data", () =>
+{
+    var portable = Path.Combine(dir, "portable");
+    Directory.CreateDirectory(portable);
+    var executable = Path.Combine(portable, "ThisWidget.exe");
+    File.WriteAllText(executable, "portable fixture");
+    var local = Path.Combine(dir, "portable-data");
+    Eq(AppPaths.JournalPath(Path.Combine(local, "ThisWidget", "journal.json")),
+        AppPaths.DefaultJournalPath(executable, local));
+    Eq(AppPaths.PhysicalPath(executable), AppPaths.PhysicalPath(Path.Combine(portable, ".", "ThisWidget.exe")));
+});
 Directory.Delete(dir, true);
 Console.WriteLine($"{passed} passed, {failed} failed");
 return failed == 0 ? 0 : 1;
