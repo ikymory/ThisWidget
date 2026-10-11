@@ -22,10 +22,11 @@ if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed ($LASTEXITCODE)." }
 foreach ($file in @('Install.cmd', 'Install.ps1', 'Uninstall.cmd', 'Uninstall.ps1')) {
     Copy-Item -LiteralPath (Join-Path $repo "packaging/$file") -Destination $folder
 }
-foreach ($file in @('README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md')) {
+foreach ($file in @('README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'CONTRIBUTING.md', 'RELEASE_NOTES.md')) {
     Copy-Item -LiteralPath (Join-Path $repo $file) -Destination $folder
 }
 Copy-Item -LiteralPath (Join-Path $repo 'packaging/licenses') -Destination $folder -Recurse
+Copy-Item -LiteralPath (Join-Path $repo 'docs') -Destination $folder -Recurse
 Compress-Archive -Path (Join-Path $folder '*') -DestinationPath $zip -Force -CompressionLevel Optimal
 $stream = [IO.File]::OpenRead($zip)
 $hash = [Security.Cryptography.SHA256]::Create()

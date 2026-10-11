@@ -60,12 +60,14 @@ if (-not [string]::Equals($source.TrimEnd('\'), $target.TrimEnd('\'), [StringCom
     Stop-LegacyApp
     New-Item -ItemType Directory -Path $target -Force | Out-Null
     # Copy only application deliverables, never a journal or arbitrary extracted files.
-    foreach ($name in @('ThisWidget.exe', 'Install.cmd', 'Install.ps1', 'Uninstall.cmd', 'Uninstall.ps1', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md')) {
+    foreach ($name in @('ThisWidget.exe', 'Install.cmd', 'Install.ps1', 'Uninstall.cmd', 'Uninstall.ps1', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'CONTRIBUTING.md', 'RELEASE_NOTES.md')) {
         $file = Join-Path $source $name
         if (Test-Path -LiteralPath $file -PathType Leaf) { Copy-Item -LiteralPath $file -Destination (Join-Path $target $name) -Force }
     }
-    $licenses = Join-Path $source 'licenses'
-    if (Test-Path -LiteralPath $licenses -PathType Container) { Copy-Item -LiteralPath $licenses -Destination $target -Recurse -Force }
+    foreach ($directory in @('licenses', 'docs')) {
+        $folder = Join-Path $source $directory
+        if (Test-Path -LiteralPath $folder -PathType Container) { Copy-Item -LiteralPath $folder -Destination $target -Recurse -Force }
+    }
 }
 
 $shell = New-Object -ComObject WScript.Shell
