@@ -1,0 +1,19 @@
+name: Bug report
+description: Report a problem with ThisWidget.
+body:
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Explain what you did, what happened, and what you expected.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version and Windows version
+  - type: textarea
+    id: details
+    attributes:
+      label: Additional details
+      description: Include theme, display scaling, desktop/floating mode and relevant screenshots. Omit private journal data.

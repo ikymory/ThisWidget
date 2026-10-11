@@ -1,0 +1,16 @@
+**/bin/
+**/obj/
+.vs/
+.idea/
+.dotnet/
+artifacts/
+publish/
+*.user
+*.suo
+*.pdb
+*.log
+*.tmp
+*.json.bak
+journal.json*
+*.zip
+.DS_Store
