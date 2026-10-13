@@ -74,6 +74,37 @@ public static class UiTests
         var w = controller.Editor!;
         w.UpdateLayout();
         controller.Widget.UpdateLayout();
+        Test("Add Widget offers only the home screen and restores a locked widget", () =>
+        {
+            controller.RemoveWidget();
+            var plan = string.Join(',', j.Plan(today));
+            w.Dispatcher.BeginInvoke(() =>
+            {
+                var dialog = app.Windows.OfType<WidgetSetupDialog>().Single();
+                dialog.UpdateLayout();
+                Eq(false, Find<TextBlock>(dialog).Any(x => x.Text.Contains("Win+W", StringComparison.OrdinalIgnoreCase)));
+                Click(Button(dialog, "Add to home screen"));
+                Eq(true, j.Settings.WidgetEnabled);
+                Eq(true, j.Settings.DesktopMode);
+                Eq(true, j.Settings.LockPosition);
+                Eq(false, j.Settings.AlwaysOnTop);
+                Eq(plan, string.Join(',', j.Plan(today)));
+                Click(Button(dialog, "Done"));
+            });
+            Click(Button(w, "Add Widget"));
+            j.Settings.DesktopMode = false; // Model/control tests also run without Explorer in CI.
+            controller.ApplySettings(j.Settings);
+        });
+        Test("Settings exposes home widget controls without floating or board options", () =>
+        {
+            var dialog = new SettingsDialog(w, j.Settings, () => { }, () => { }, () => { }, controller.ResetWidgetPosition);
+            dialog.Show();
+            dialog.UpdateLayout();
+            Eq(true, Find<CheckBox>(dialog).Any(x => Equals(x.Content, "Lock widget position")));
+            Eq(false, Find<CheckBox>(dialog).Any(x => x.Content?.ToString()?.Contains("floating", StringComparison.OrdinalIgnoreCase) == true));
+            Eq(false, Find<Button>(dialog).Any(x => x.Content?.ToString()?.Contains("board", StringComparison.OrdinalIgnoreCase) == true));
+            dialog.Close();
+        });
         Test("All twelve months and every day are rendered", () => { Eq(DateTime.IsLeapYear(today.Year) ? 366 : 365, Find<Button>(w).Count(x => x.Tag is DateOnly)); });
         Test("Exercise clicks fill the actual calendar and persist", () => { foreach (var c in Find<CheckBox>(w)) { c.IsChecked = true; c.RaiseEvent(new RoutedEventArgs(CheckBox.ClickEvent)); } Eq(true, j.IsComplete(today)); Eq(true, store.Load().IsComplete(today)); Eq("✓  Completed · click to undo", ((Button)w.FindName("CompleteButton")).Content); });
         Test("Notes survive selecting another date", () => { ((TextBox)w.FindName("Notes")).Text = "UI integration note"; Click(Find<Button>(w).Single(b => b.Tag is DateOnly d && d == today.AddDays(-1))); Eq("UI integration note", store.Load().Days[Journal.Key(today)].Notes); Click(Button(w, "Today")); Eq("UI integration note", ((TextBox)w.FindName("Notes")).Text); });
@@ -81,6 +112,10 @@ public static class UiTests
         Test("Weekly editor saves recurring plan through real modal", () => { w.Dispatcher.BeginInvoke(() => { var d = app.Windows.OfType<WeeklyDialog>().Single(); d.UpdateLayout(); var boxes = Find<TextBox>(d); boxes[1].Text = "Back, Chest, Shoulders"; Click(Button(d, "Save weekly split")); }); Click(Button(w, "↻  Edit weekly split")); Eq("Back,Chest,Shoulders", string.Join(',', j.Weekly["Tuesday"])); });
         Test("Day editor persists an explicit empty override", () => { w.Dispatcher.BeginInvoke(() => { var d = app.Windows.OfType<DayDialog>().Single(); d.Input.Text = ""; Click(Button(d, "Save day")); }); Click(Button(w, "Edit day")); Eq(0, j.Plan(today).Count); Eq(0, store.Load().Plan(today).Count); });
         Test("Theme color and minimum size apply without losing data", () => { w.Dispatcher.BeginInvoke(() => { var d = app.Windows.OfType<SettingsDialog>().Single(); d.UpdateLayout(); Find<RadioButton>(d).Single(x => Equals(x.Content, "Paper")).IsChecked = true; Find<Slider>(d).First().Value = .7; Find<TextBox>(d).First().Text = "#85BBFF"; Click(Button(d, "Apply changes")); }); Click(Find<Button>(w).Single(x => Equals(x.Content, "⚙"))); w.UpdateLayout(); Eq(700d, w.Width); Eq("Paper", j.Settings.Theme); Eq("#85BBFF", store.Load().Settings.Accent); Eq(DateTime.IsLeapYear(today.Year) ? 366 : 365, Find<Button>(w).Count(x => x.Tag is DateOnly)); });
+        // Keep the control fixture portable across CI agents without an Explorer shell.
+        // Production settings stay attached; --desktop below exercises that native path.
+        j.Settings.DesktopMode = false;
+        controller.ApplySettings(j.Settings);
         Test("Backup restore cannot silently change saved appearance", () => { Eq("Paper", store.Load().Settings.Theme); Eq("UI integration note", store.Load().Days[Journal.Key(today)].Notes); });
         Test("Year navigation renders leap year", () => { Click(Button(w, "Today")); int current = today.Year; while (current < 2028) { Click(Button(w, "›")); current++; } while (current > 2028) { Click(Button(w, "‹")); current--; } Eq(366, Find<Button>(w).Count(x => x.Tag is DateOnly)); Eq(true, Find<Button>(w).Any(x => x.Tag is DateOnly d && d == new DateOnly(2028, 2, 29))); });
         Test("Desktop widget renders all dates and today's actual focus", () => { Eq(DateTime.IsLeapYear(today.Year) ? 366 : 365, Find<Button>(controller.Widget).Count(x => x.Tag is DateOnly)); Eq(today.ToString("dddd", System.Globalization.CultureInfo.GetCultureInfo("en-US")), ((TextBlock)controller.Widget.FindName("TodayLabel")).Text); });
@@ -169,6 +204,16 @@ public static class UiTests
                 using var output = File.Create(Path.Combine(outputDir, item.Item1));
                 encoder.Save(output);
             }
+            demoController.RemoveWidget();
+            var setup = new WidgetSetupDialog(preview, demoController);
+            setup.Show();
+            setup.UpdateLayout();
+            var setupBitmap = new RenderTargetBitmap((int)setup.ActualWidth * 2, (int)setup.ActualHeight * 2, 192, 192, PixelFormats.Pbgra32);
+            setupBitmap.Render(setup);
+            var setupEncoder = new PngBitmapEncoder();
+            setupEncoder.Frames.Add(BitmapFrame.Create(setupBitmap));
+            using (var setupFile = File.Create(Path.Combine(outputDir, "widget-setup.png"))) setupEncoder.Save(setupFile);
+            setup.Close();
             Console.WriteLine("Rendered previews: " + outputDir);
         }
         demoController.Dispose();

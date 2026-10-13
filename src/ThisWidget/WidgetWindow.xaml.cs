@@ -200,6 +200,11 @@ public partial class WidgetWindow : Window
             controller.AddWidget();
             handled = true;
         }
+        if (message == Native.HomeWidgetMessage)
+        {
+            controller.AddHomeWidget();
+            handled = true;
+        }
         return IntPtr.Zero;
     }
 

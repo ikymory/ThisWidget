@@ -10,7 +10,7 @@
             <TextBlock Text="THISWIDGET" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/><TextBlock Text="  /  TRAINING JOURNAL" Foreground="{DynamicResource Muted}" FontSize="10" VerticalAlignment="Center" Margin="10,0,0,0"/>
           </StackPanel>
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="Desktop widget" Click="WidgetClick" Margin="0,0,8,0" Padding="12,5" ToolTip="Add or show the widget"/><Button x:Name="TodayButton" Content="Today" Click="TodayClick" Margin="0,0,8,0" Padding="12,5"/>
+            <Button Content="Add Widget" Click="WidgetClick" Margin="0,0,8,0" Padding="12,5" ToolTip="Add a fixed widget to your home screen"/><Button x:Name="TodayButton" Content="Today" Click="TodayClick" Margin="0,0,8,0" Padding="12,5"/>
             <Button Content="⚙" ToolTip="Customize appearance, size and backups" AutomationProperties.Name="Customize" Click="SettingsClick" Width="34" Padding="0" Margin="0,0,8,0"/>
             <Button Content="−" ToolTip="Hide to tray. Double-click tray icon to return." AutomationProperties.Name="Hide to tray" Click="HideClick" Width="30" Padding="0" Margin="0,0,4,0"/>
             <Button Content="×" ToolTip="Close calendar; keep widget running" AutomationProperties.Name="Close calendar" Click="CloseClick" Width="30" Padding="0"/>

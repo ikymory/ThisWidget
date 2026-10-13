@@ -41,6 +41,11 @@ public sealed class AppController : IDisposable
         this.integrate = integrate;
         Journal = journal;
         Journal.Normalize();
+        if (integrate)
+        {
+            Journal.Settings.DesktopMode = true;
+            Journal.Settings.AlwaysOnTop = false;
+        }
         Theme.Apply(Journal.Settings);
         Widget = new WidgetWindow(this);
         clock.Tick += (_, _) => Tick();
@@ -92,6 +97,11 @@ public sealed class AppController : IDisposable
     {
         Journal.Settings = settings;
         Journal.Normalize();
+        if (integrate)
+        {
+            settings.DesktopMode = true;
+            settings.AlwaysOnTop = false;
+        }
         Theme.Apply(settings);
         Editor?.ApplyAppearance();
         if (integrate)
@@ -118,6 +128,20 @@ public sealed class AppController : IDisposable
         Journal.Settings.WidgetEnabled = false;
         Widget.Hide();
         Save();
+    }
+
+    public void AddHomeWidget()
+    {
+        Journal.Settings.DesktopMode = true;
+        Journal.Settings.AlwaysOnTop = false;
+        Journal.Settings.LockPosition = true;
+        AddWidget();
+    }
+
+    public void OpenWidgetSetup()
+    {
+        OpenEditor();
+        new WidgetSetupDialog(Editor!, this).ShowDialog();
     }
 
     public void ResetWidgetPosition()
@@ -177,7 +201,7 @@ public sealed class AppController : IDisposable
         };
         var menu = new System.Windows.Forms.ContextMenuStrip();
         menu.Items.Add("Open calendar   Ctrl+Alt+W", null, (_, _) => Application.Current.Dispatcher.Invoke(() => OpenEditor()));
-        menu.Items.Add("Show desktop widget", null, (_, _) => Application.Current.Dispatcher.Invoke(AddWidget));
+        menu.Items.Add("Add Widget to home screen", null, (_, _) => Application.Current.Dispatcher.Invoke(AddHomeWidget));
         menu.Items.Add("Settings", null, (_, _) => Application.Current.Dispatcher.Invoke(OpenSettings));
         menu.Items.Add("Exit ThisWidget", null, (_, _) => Application.Current.Dispatcher.Invoke(Exit));
         tray.ContextMenuStrip = menu;

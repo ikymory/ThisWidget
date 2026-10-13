@@ -1,8 +1,8 @@
 # ThisWidget
 
-**Your training, one day at a time.** A free, open-source Windows workout calendar with a real desktop widget. See your whole year, today's focus, and every day you showed up.
+**Your training, one day at a time.** A free, open-source Windows workout calendar with a fixed home screen widget. See your whole year, today's focus, and every day you showed up.
 
-![ThisWidget desktop widget](docs/images/widget.png)
+![ThisWidget widget](docs/images/widget.png)
 
 ## Download
 
@@ -15,11 +15,13 @@ Built for Windows 11 x64. The release workflow can also build Windows ARM64; ARM
 ## Use it
 
 1. Open **Edit weekly split**. Enter what you train on each weekday, such as `Legs, Back, Core`. Empty days mean rest / no planned focus.
-2. The widget starts pinned to your desktop, behind other apps, with its position locked. Click **↗** to open the calendar; **Desktop widget** adds it again if removed. The widget shows all 365 days, or 366 in leap years, plus today's weekday and focus. To reposition it, unlock it in Settings, drag its header, then lock it again.
+2. The widget starts pinned to your desktop, behind other apps, with its position locked. Click **↗** to open the calendar; **Add Widget → Add to home screen** adds it again if removed. **Reset widget position** brings it back into view. The widget shows all 365 days, or 366 in leap years, plus today's weekday and focus. To reposition it, unlock it in Settings, drag its header, then lock it again.
 3. Check individual exercises in the calendar or enable the widget checklist. Checking them all fills the day's box. **Mark today done** completes a session directly.
 4. Click any widget box to open that date in the calendar. Right-click a date in either view for a quick completion toggle.
 
 Future dates can be planned but cannot be completed early. Daily overrides affect one date. Logged sessions preserve their original focus when the weekly split changes. Notes save automatically.
+
+![Add the widget to your home screen](docs/images/widget-setup.png)
 
 ![ThisWidget calendar editor](docs/images/calendar.png)
 
@@ -29,7 +31,7 @@ Screenshots use demonstration history. A fresh installation starts with an empty
 
 - Six accent presets or a custom `#RRGGBB` color; Obsidian and Paper themes.
 - Separate calendar and widget sizes; widget opacity from 50% to 100%.
-- Desktop attachment behind apps, or a floating widget with optional always-on-top.
+- Fixed home screen placement behind apps; locked by default.
 - Position lock and reset position; show/hide widget and exercise checklist.
 - Monday or Sunday week start; optional calendar day numbers.
 - Weekly workout goal, streak and session counts.
@@ -38,7 +40,7 @@ Screenshots use demonstration history. A fresh installation starts with an empty
 
 Scrollbars, sliders, checkboxes and text fields follow the selected theme. Long workout lists and settings panels remain scrollable.
 
-**Ctrl+Alt+W** opens the calendar. The tray icon can reopen the app, show the widget, change settings or exit. Closing the calendar keeps the widget running; the widget's × removes it until you add it again.
+**Ctrl+Alt+W** opens the calendar. The tray icon can reopen the app, show the widget, change settings or exit. Closing the calendar keeps the visible widget running; the widget's × removes it until you add it again. Choose **Exit ThisWidget** from the tray to stop the app completely. One local process draws the widget; there is no separate provider or background service.
 
 Desktop attachment uses Explorer's desktop host. If Explorer is not ready at sign-in, desktop mode waits and retries; it does not become a floating overlay. After Explorer restarts, reopen the app if necessary.
 
@@ -67,6 +69,7 @@ dotnet run --project tests/ThisWidget.UiTests -- docs/images --desktop
 ```
 
 After installing, verify the running desktop widget and its Windows startup target with `./tests/Installation.Tests.ps1`.
+The published executable's startup visibility, single-instance commands and data preservation can be checked with `./tests/Launch.Tests.ps1 -Executable ./artifacts/ThisWidget-Windows-x64/ThisWidget.exe`.
 
 Create a self-contained Windows release:
 
@@ -76,7 +79,7 @@ Create a self-contained Windows release:
 
 The script creates `artifacts/ThisWidget-Windows-x64.zip` and a SHA-256 checksum. `win-arm64` is also available for cross-publishing.
 
-The app opens the fixed desktop widget by default. CLI: `--editor` also opens the calendar editor, `--background` starts only the tray/widget and respects the saved visibility preference, `--exit` gracefully stops the default journal instance, and `--data C:\path\journal.json` uses an independent journal without changing Windows startup.
+The app opens the fixed home screen widget by default. CLI: `--home` adds and locks it on the home screen, `--editor` also opens the calendar editor, `--background` starts only the tray/widget and respects the saved visibility preference, `--exit` gracefully stops the default journal instance, and `--data C:\path\journal.json` uses an independent journal without changing Windows startup.
 
 ## Architecture
 

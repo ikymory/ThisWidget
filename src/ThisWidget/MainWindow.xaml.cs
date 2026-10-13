@@ -19,6 +19,7 @@ public partial class MainWindow : Window
     private int year;
     private bool refreshing, notesDirty;
     private readonly DispatcherTimer noteTimer = new() { Interval = TimeSpan.FromMilliseconds(650) };
+    private SettingsDialog? settingsDialog;
     private static readonly CultureInfo English = CultureInfo.GetCultureInfo("en-US");
 
     public MainWindow(AppController controller)
@@ -248,13 +249,15 @@ public partial class MainWindow : Window
     }
     public void ShowSettings()
     {
+        if (settingsDialog != null) { settingsDialog.Activate(); return; }
         FlushNotes();
         var dialog = new SettingsDialog(this, Journal.Settings, controller.Export, controller.Import, controller.SaveImage, controller.ResetWidgetPosition);
-        if (dialog.ShowDialog() == true)
-            controller.ApplySettings(dialog.Result);
+        settingsDialog = dialog;
+        try { if (dialog.ShowDialog() == true) controller.ApplySettings(dialog.Result); }
+        finally { settingsDialog = null; }
     }
     private void SettingsClick(object sender, RoutedEventArgs e) => ShowSettings();
-    private void WidgetClick(object sender, RoutedEventArgs e) => controller.AddWidget();
+    private void WidgetClick(object sender, RoutedEventArgs e) => controller.OpenWidgetSetup();
     private void HideClick(object sender, RoutedEventArgs e)
     {
         FlushNotes();

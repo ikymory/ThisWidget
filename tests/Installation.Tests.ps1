@@ -26,7 +26,7 @@ public static class ThisWidgetDesktopCheck {
         Callback visit = (h, data) => {
             uint owner; GetWindowThreadProcessId(h, out owner);
             var text = new StringBuilder(256); GetWindowText(h, text, 256);
-            if (owner == process && text.ToString() == "ThisWidget \u00b7 Desktop Widget")
+            if (owner == process && text.ToString() == "ThisWidget \u00b7 Widget")
                 found = IsWindowVisible(h) && IsWindowVisible(GetParent(h)) && (GetWindowLong(h, -16) & 0x40000000) != 0;
             return true;
         };
@@ -48,5 +48,5 @@ do {
     }
     if (-not $visible) { [Threading.Thread]::Sleep(100) }
 } while (-not $visible -and [DateTime]::UtcNow -lt $deadline)
-if (-not $visible) { throw 'Installed desktop widget is not running as a visible child of a visible desktop host.' }
+if (-not $visible) { throw 'Installed widget is not running as a visible child of a visible desktop host.' }
 Write-Host 'PASS Installed widget is running and natively visible on the desktop'

@@ -16,4 +16,4 @@ body:
     id: details
     attributes:
       label: Additional details
-      description: Include theme, display scaling, desktop/floating mode and relevant screenshots. Omit private journal data.
+      description: Include theme, display scaling, widget size and relevant screenshots. Omit private journal data.

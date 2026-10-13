@@ -17,6 +17,17 @@ function Get-AppProcess([string]$Path) {
     })
 }
 
+function Copy-AppFile([string]$SourceFile, [string]$DestinationFile) {
+    # Windows can retain an executable mapping briefly after graceful process exit.
+    for ($attempt = 0; $attempt -lt 20; $attempt++) {
+        try { Copy-Item -LiteralPath $SourceFile -Destination $DestinationFile -Force -ErrorAction Stop; return }
+        catch [IO.IOException] {
+            if ($attempt -eq 19) { throw }
+            [Threading.Thread]::Sleep(100)
+        }
+    }
+}
+
 # Ask the original calendar to close, including when it is an Explorer child.
 function Stop-LegacyApp {
     $processes = @(Get-AppProcess $legacyExe)
@@ -64,7 +75,7 @@ if (-not [string]::Equals($source.TrimEnd('\'), $target.TrimEnd('\'), [StringCom
     # Copy only application deliverables, never a journal or arbitrary extracted files.
     foreach ($name in @('ThisWidget.exe', 'Paths.ps1', 'Install.cmd', 'Install.ps1', 'Uninstall.cmd', 'Uninstall.ps1', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'CONTRIBUTING.md', 'RELEASE_NOTES.md')) {
         $file = Join-Path $source $name
-        if (Test-Path -LiteralPath $file -PathType Leaf) { Copy-Item -LiteralPath $file -Destination (Join-Path $target $name) -Force }
+        if (Test-Path -LiteralPath $file -PathType Leaf) { Copy-AppFile $file (Join-Path $target $name) }
     }
     foreach ($directory in @('licenses', 'docs')) {
         $folder = Join-Path $source $directory
@@ -80,7 +91,7 @@ foreach ($directory in @([Environment]::GetFolderPath('Desktop'), [Environment]:
     $shortcut = $shell.CreateShortcut((Join-Path $directory 'ThisWidget.lnk'))
     $shortcut.TargetPath = $exe
     $shortcut.WorkingDirectory = $target
-    $shortcut.Description = 'ThisWidget workout calendar and desktop widget'
+    $shortcut.Description = 'ThisWidget workout calendar and widget'
     $shortcut.IconLocation = "$exe,0"
     $shortcut.Save()
     $old = Join-Path $directory 'Yearform.lnk'
@@ -95,4 +106,4 @@ if ($oldStartup -and ($oldStartup -eq ('"' + $legacyExe + '" --background') -or 
 }
 Write-Host "Installed: $exe"
 Write-Host 'Your journal is preserved. Open Settings to choose Windows startup and widget preferences.'
-if (-not $NoLaunch) { Start-Process -FilePath $exe -WorkingDirectory $target -WindowStyle Hidden }
+if (-not $NoLaunch) { Start-Process -FilePath $exe -ArgumentList --background -WorkingDirectory $target -WindowStyle Hidden }

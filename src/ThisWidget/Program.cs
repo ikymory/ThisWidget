@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Windows;
 
@@ -39,14 +41,25 @@ public static class Program
         path ??= AppPaths.DefaultJournalPath(Environment.ProcessPath!,
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
         DataFolder = Path.GetDirectoryName(path)!;
-        var name = "Local\\ThisWidget-" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
-            System.Text.Encoding.UTF8.GetBytes(path.ToUpperInvariant())))[..24];
+        var name = "Local\\ThisWidget-" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(path.ToUpperInvariant())))[..24];
         using var mutex = new Mutex(true, name, out bool first);
         Native.ProfileKey = name;
         bool exitRequested = Array.Exists(args, x => x == "--exit");
+        bool homeRequested = Array.Exists(args, x => x == "--home");
         if (!first)
         {
-            Native.ActivateExisting(exitRequested, editor: !background);
+            if (exitRequested || homeRequested || !Array.Exists(args, x => x == "--background"))
+            {
+                // The mutex exists before WPF creates its message window. Wait for startup readiness.
+                for (int attempt = 0; attempt < 100; attempt++)
+                {
+                    if (Native.ActivateExisting(exitRequested, editor: !background, home: homeRequested))
+                        return 0;
+                    Thread.Sleep(50);
+                }
+                Log(new TimeoutException("The existing ThisWidget instance did not become ready for activation."));
+                return 2;
+            }
             return 0;
         }
         if (exitRequested)
@@ -73,7 +86,8 @@ public static class Program
             var store = new Store(path);
             using var controller = new AppController(store, store.Load(), Integrate);
             controller.Start(background);
-            if (background && !Array.Exists(args, x => x == "--background"))
+            if (homeRequested) controller.AddHomeWidget();
+            else if (background && !Array.Exists(args, x => x == "--background"))
                 controller.AddWidget();
             app.Run();
             return 0;

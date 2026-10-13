@@ -113,13 +113,35 @@ public class DayDialog : Dialog
         Action("Save day", () => DialogResult = true, true);
     }
 }
+public sealed class WidgetSetupDialog : Dialog
+{
+    public WidgetSetupDialog(Window owner, AppController controller) : base(owner, "Your Widget.", "Your year of progress, fixed on your home screen.", 420)
+    {
+        Label("HOME SCREEN");
+        var status = new TextBlock { TextWrapping = TextWrapping.Wrap, Foreground = Brush("Muted"), Margin = new Thickness(0, 0, 0, 12) };
+        void RefreshStatus() => status.Text = !controller.Journal.Settings.WidgetEnabled ? "Widget removed. Add it to your home screen below." :
+            controller.Widget.IsDesktopAttached && controller.Widget.IsVisible ? "Widget is attached to your home screen. Press Win+D to see it behind your open apps." :
+            "Waiting for the Windows desktop. Keep ThisWidget running; it retries automatically.";
+        RefreshStatus();
+        Body.Children.Add(status);
+        var home = new Button { Content = "Add to home screen", HorizontalAlignment = HorizontalAlignment.Left, Background = Brush("Accent"), Foreground = Brush("AccentInk"), Margin = new Thickness(0, 0, 0, 12) };
+        home.Click += (_, _) => { controller.AddHomeWidget(); RefreshStatus(); };
+        Body.Children.Add(home);
+        var reset = new Button { Content = "Reset widget position", HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 12) };
+        reset.Click += (_, _) => { controller.ResetWidgetPosition(); controller.AddHomeWidget(); RefreshStatus(); };
+        Body.Children.Add(reset);
+        Body.Children.Add(new TextBlock { Text = "The Widget stays fixed behind apps and shows every day of the year.\nSet color, size and your repeating workout plan in Settings and Edit weekly split.", TextWrapping = TextWrapping.Wrap, Foreground = Brush("Muted"), FontSize = 12, LineHeight = 18 });
+        Action("Done", () => DialogResult = true, true);
+    }
+}
+
 public class SettingsDialog : Dialog
 {
     public Appearance Result
     {
         get; private set;
     }
-    public SettingsDialog(Window owner, Appearance settings, Action export, Action import, Action image, Action resetPosition) : base(owner, "Make it yours.", "Fine-tune your calendar and desktop widget. Your workouts stay saved on this device.", 735)
+    public SettingsDialog(Window owner, Appearance settings, Action export, Action import, Action image, Action resetPosition) : base(owner, "Make it yours.", "Fine-tune your calendar and widget. Your workouts stay saved on this device.", 735)
     {
         Result = JsonSerializer.Deserialize<Appearance>(JsonSerializer.Serialize(settings))!;
         Label("ACCENT COLOR");
@@ -144,23 +166,19 @@ public class SettingsDialog : Dialog
         var slider = new Slider { Minimum = .7, Maximum = 1.25, Value = settings.Scale, TickFrequency = .05, IsSnapToTickEnabled = true };
         slider.ValueChanged += (s, e) => sizeLabel.Text = "CALENDAR SIZE · " + Math.Round(slider.Value * 100) + "%";
         Body.Children.Add(slider);
-        var widgetLabel = Label("DESKTOP WIDGET SIZE · " + Math.Round(settings.WidgetScale * 100) + "%");
+        var widgetLabel = Label("WIDGET SIZE · " + Math.Round(settings.WidgetScale * 100) + "%");
         var widgetSize = new Slider { Minimum = .7, Maximum = 1.5, Value = settings.WidgetScale, TickFrequency = .05, IsSnapToTickEnabled = true };
-        widgetSize.ValueChanged += (s, e) => widgetLabel.Text = "DESKTOP WIDGET SIZE · " + Math.Round(widgetSize.Value * 100) + "%";
+        widgetSize.ValueChanged += (s, e) => widgetLabel.Text = "WIDGET SIZE · " + Math.Round(widgetSize.Value * 100) + "%";
         Body.Children.Add(widgetSize);
         var opacityLabel = Label("WIDGET OPACITY · " + Math.Round(settings.Opacity * 100) + "%");
         var opacity = new Slider { Minimum = .5, Maximum = 1, Value = settings.Opacity, TickFrequency = .05, IsSnapToTickEnabled = true };
         opacity.ValueChanged += (s, e) => opacityLabel.Text = "WIDGET OPACITY · " + Math.Round(opacity.Value * 100) + "%";
         Body.Children.Add(opacity);
-        Label("DESKTOP BEHAVIOR");
-        var dock = new CheckBox { Content = "Attach to desktop, behind other windows", IsChecked = settings.DesktopMode, Margin = new Thickness(0, 0, 0, 12) };
-        var top = new CheckBox { Content = "Keep floating widget on top", IsChecked = settings.AlwaysOnTop, Margin = new Thickness(0, 0, 0, 12) };
+        Label("WIDGET");
         var startup = new CheckBox { Content = "Launch when I sign in to Windows", IsChecked = settings.StartWithWindows, IsEnabled = Program.Integrate, Margin = new Thickness(0, 0, 0, 12) };
-        Body.Children.Add(dock);
-        Body.Children.Add(top);
         Body.Children.Add(startup);
         Body.Children.Add(new TextBlock { Text = "The widget stays fixed behind apps by default. Unlock its position\nto move it, then lock again. Ctrl+Alt+W opens the calendar editor.", TextWrapping = TextWrapping.Wrap, Foreground = Brush("Muted"), FontSize = 11, LineHeight = 18 });
-        var enabled = new CheckBox { Content = "Show desktop widget", IsChecked = settings.WidgetEnabled, Margin = new Thickness(0, 12, 0, 12) };
+        var enabled = new CheckBox { Content = "Show widget", IsChecked = settings.WidgetEnabled, Margin = new Thickness(0, 12, 0, 12) };
         var locked = new CheckBox { Content = "Lock widget position", IsChecked = settings.LockPosition, Margin = new Thickness(0, 0, 0, 12) };
         var checklist = new CheckBox { Content = "Show exercise checklist in widget", IsChecked = settings.ShowChecklist, Margin = new Thickness(0, 0, 0, 12) };
         Body.Children.Add(enabled);
@@ -195,6 +213,6 @@ public class SettingsDialog : Dialog
         Body.Children.Add(data);
         var error = new TextBlock { Foreground = new SolidColorBrush(Color.FromRgb(255, 140, 130)), TextWrapping = TextWrapping.Wrap };
         Body.Children.Add(error);
-        Action("Apply changes", () => { if (!Regex.IsMatch(accent.Text, "^#[0-9A-Fa-f]{6}$")) { error.Text = "Enter a six-digit hex color, for example #CDFE85."; return; } if (!TimeOnly.TryParseExact(reminderTime.Text, "HH:mm", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var time)) { error.Text = "Use HH:mm for reminder time, for example 18:30."; return; } Result.Accent = accent.Text.ToUpperInvariant(); Result.Theme = light.IsChecked == true ? "Paper" : "Obsidian"; Result.Scale = slider.Value; Result.WidgetScale = widgetSize.Value; Result.Opacity = opacity.Value; Result.DesktopMode = dock.IsChecked == true; Result.AlwaysOnTop = top.IsChecked == true; Result.StartWithWindows = startup.IsChecked == true; Result.WidgetEnabled = enabled.IsChecked == true; Result.LockPosition = locked.IsChecked == true; Result.ShowChecklist = checklist.IsChecked == true; Result.SundayFirst = sunday.IsChecked == true; Result.ShowDayNumbers = numbers.IsChecked == true; Result.WeeklyGoal = (int)goal.Value; Result.ReminderEnabled = remind.IsChecked == true; Result.ReminderHour = time.Hour; Result.ReminderMinute = time.Minute; DialogResult = true; }, true);
+        Action("Apply changes", () => { if (!Regex.IsMatch(accent.Text, "^#[0-9A-Fa-f]{6}$")) { error.Text = "Enter a six-digit hex color, for example #CDFE85."; return; } if (!TimeOnly.TryParseExact(reminderTime.Text, "HH:mm", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var time)) { error.Text = "Use HH:mm for reminder time, for example 18:30."; return; } Result.Accent = accent.Text.ToUpperInvariant(); Result.Theme = light.IsChecked == true ? "Paper" : "Obsidian"; Result.Scale = slider.Value; Result.WidgetScale = widgetSize.Value; Result.Opacity = opacity.Value; Result.DesktopMode = true; Result.AlwaysOnTop = false; Result.StartWithWindows = startup.IsChecked == true; Result.WidgetEnabled = enabled.IsChecked == true; Result.LockPosition = locked.IsChecked == true; Result.ShowChecklist = checklist.IsChecked == true; Result.SundayFirst = sunday.IsChecked == true; Result.ShowDayNumbers = numbers.IsChecked == true; Result.WeeklyGoal = (int)goal.Value; Result.ReminderEnabled = remind.IsChecked == true; Result.ReminderHour = time.Hour; Result.ReminderMinute = time.Minute; DialogResult = true; }, true);
     }
 }

@@ -1,3 +1,17 @@
+ThisWidget 1.1.0 makes adding the fixed home screen widget explicit.
+
+- Add Widget opens a home screen setup panel with add, status and reset-position controls.
+- Widget placement stays behind apps, with a locked position when added. Floating and always-on-top controls have been removed.
+- Color, size, opacity, exercise checklist, weekly plans and all saved progress are preserved.
+- No Windows Widgets provider, board package, separate service or board setup is included.
+- Updates retain widget visibility preferences; relaunching the startup command cannot silently restore a removed widget.
+
+Download and extract the matching zip, then run Install.cmd to update. Open ThisWidget.exe to show the widget, or choose Add Widget in the calendar.
+
+The runtime is included. Windows x64 was tested locally; ARM64 is cross-built and hardware execution remains unverified. Releases are unsigned.
+
+## 1.0.1
+
 ThisWidget 1.0.1 fixes desktop widget startup after an installation through a packaged launcher.
 
 - Windows sign-in and shortcuts now point to the physical executable instead of an AppData path visible only inside the installer container.

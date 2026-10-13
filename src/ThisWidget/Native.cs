@@ -12,6 +12,7 @@ public static class Native
     public const int WakeMessage = 0x8000 + 88;
     public const int ExitMessage = WakeMessage + 1;
     public const int WidgetMessage = WakeMessage + 2;
+    public const int HomeWidgetMessage = WakeMessage + 3;
     public static string ProfileKey { get; set; } = "";
     public delegate bool EnumProc(IntPtr hwnd, IntPtr param);
     [DllImport("user32.dll")] static extern bool EnumWindows(EnumProc callback, IntPtr lParam);
@@ -43,17 +44,27 @@ public static class Native
     {
         public int X, Y;
     }
-    public static void ActivateExisting(bool exit = false, bool editor = true)
+    public static bool ActivateExisting(bool exit = false, bool editor = true, bool home = false)
     {
+        bool posted = false;
         bool Scan(IntPtr h, IntPtr p)
         {
             var b = new StringBuilder(256);
             GetWindowText(h, b, 256);
-            if (b.ToString() == "ThisWidget · Desktop Widget" && (ProfileKey.Length == 0 || GetProp(h, ProfileKey) != IntPtr.Zero))
-                PostMessage(h, (uint)(exit ? ExitMessage : editor ? WakeMessage : WidgetMessage), IntPtr.Zero, IntPtr.Zero);
+            string title = b.ToString();
+            if ((title == "ThisWidget · Widget" || title == "ThisWidget · Desktop Widget") &&
+                (ProfileKey.Length == 0 || GetProp(h, ProfileKey) != IntPtr.Zero))
+            {
+                // The older title identifies v1.0.x, which only understands WidgetMessage.
+                int message = exit ? ExitMessage : home
+                    ? title == "ThisWidget · Widget" ? HomeWidgetMessage : WidgetMessage
+                    : editor ? WakeMessage : WidgetMessage;
+                posted |= PostMessage(h, (uint)message, IntPtr.Zero, IntPtr.Zero);
+            }
             return true;
         }
         EnumWindows((h, p) => { Scan(h, p); EnumChildWindows(h, Scan, p); return true; }, IntPtr.Zero);
+        return posted;
     }
     public static void MarkProfile(IntPtr h)
     {
